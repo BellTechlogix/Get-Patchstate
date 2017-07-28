@@ -4,12 +4,13 @@
 	By TankCR
 #>
 function Get-Patchstate {
-    param([string]$Name="Select Computer To Run Against",
+    param([string]$computer =$env:COMPUTERNAME,
 		#Type True, False, or Both to return install, not-installed, or both
-		[string]$installed="IsInstalled")
+		[string]$installed="Both")
 
-   If(!($Name)){$Name = $env:COMPUTERNAME}
-   $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session",$Computername))
+   #If(!($Name)){$Name = $env:COMPUTERNAME}
+   $AutoUpdate = [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.AutoUpdate",$computer))
+   $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session",$computer))
    $updatesearcher = $updatesession.CreateUpdateSearcher()
    # 0 = NotInstalled | 1 = Installed
    If($installed.ToUpper() -eq 'True'){$searchresult = $updatesearcher.Search("IsInstalled=1 ")}
@@ -22,6 +23,9 @@ function Get-Patchstate {
   $count  = $searchresult.Updates.Count
   Write-Verbose  "Found $Count update\s!"
 
+  #Header Objects
+  [pscustomobject]@{
+    Updates = @( 
   #Cache the  count to make the For loop run faster   
   For ($i=0; $i -lt $Count; $i++) {
   #Create  object holding update
@@ -44,6 +48,12 @@ function Get-Patchstate {
     }
    }
   }
+ )
+    LastSearchSuccessDate = $AutoUpdate.results.LastSearchSuccessDate
+    LastInstallationSuccessDate = $AutoUpdate.results.LastInstallationSuccessDate
+ }
  }
  Return $Updates 
 }
+
+Export-ModuleMember -Function 'Get-*'
