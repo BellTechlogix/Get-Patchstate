@@ -1,5 +1,7 @@
 <#
 	This Function Gets the patch state of a PC
+	Created 28July17
+	By TankCR
 #>
 function Get-Patchstate {
     param([string]$Name="Select Computer To Run Against",
@@ -10,9 +12,9 @@ function Get-Patchstate {
    $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session",$Computername))
    $updatesearcher = $updatesession.CreateUpdateSearcher()
    # 0 = NotInstalled | 1 = Installed
-   If($installed -eq 'True'){$searchresult = $updatesearcher.Search("IsInstalled=1 ")}
-   If($installed -eq 'False'){$searchresult = $updatesearcher.Search("IsInstalled=0")}
-   If($installed -eq 'Both'){$searchresult = $UpdateSearcher.Search("IsInstalled=0 or IsInstalled=1")}
+   If($installed.ToUpper() -eq 'True'){$searchresult = $updatesearcher.Search("IsInstalled=1 ")}
+   If($installed.ToUpper() -eq 'False'){$searchresult = $updatesearcher.Search("IsInstalled=0")}
+   If($installed.ToUpper() -eq 'Both' -or !($installed)){$searchresult = $UpdateSearcher.Search("IsInstalled=0 or IsInstalled=1")}
 
    $Updates = If ($searchresult.Updates.Count  -gt 0) {
 
