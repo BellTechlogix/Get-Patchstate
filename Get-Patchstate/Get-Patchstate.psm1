@@ -2,7 +2,9 @@
 	This Function Gets the patch state of a PC
 #>
 function Get-Patchstate {
-    param([string]$Name="Select Computer To Run Against",[string]$installed="IsInstalled")
+    param([string]$Name="Select Computer To Run Against",
+		#Type True, False, or Both to return install, not-installed, or both
+		[string]$installed="IsInstalled")
 
    If(!($Name)){$Name = $env:COMPUTERNAME}
    $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session",$Computername))
