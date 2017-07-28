@@ -4,7 +4,7 @@
 # You can download Pester from http://go.microsoft.com/fwlink/?LinkID=534084
 #
 
-Describe "Get-Function" {
+Describe "Get-Patchstate" {
 	Context "Function Exists" {
 		It "Should Return" {
 		
