@@ -4,13 +4,18 @@
 	By TankCR
 #>
 function Get-Patchstate {
-    param([string]$computer =$env:COMPUTERNAME,
+    param([string]$computer,
 		#Type True, False, or Both to return install, not-installed, or both
 		[string]$installed="Both")
 
-   #If(!($Name)){$Name = $env:COMPUTERNAME}
+   If(!($computer)){
+   $Name = $env:COMPUTERNAME
+   $AutoUpdate = [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.AutoUpdate"))
+   $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session"))
+   }
+   ELSE{
    $AutoUpdate = [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.AutoUpdate",$computer))
-   $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session",$computer))
+   $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session",$computer))}
    $updatesearcher = $updatesession.CreateUpdateSearcher()
    # 0 = NotInstalled | 1 = Installed
    If($installed.ToUpper() -eq 'True'){$searchresult = $updatesearcher.Search("IsInstalled=1 ")}
