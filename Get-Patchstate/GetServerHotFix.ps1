@@ -1,13 +1,15 @@
+#
+# GetServerHotFix.ps1
+#
 <#
-	This Script uses the Get-Patchstate function to loop through a server list and return a report on patch states
-	Created 16Aug17
+	This Script uses the Get-Hotfix function to loop through a server list and return a report on Installed Hotfixes
+	Created 21Aug17
 	By TankCR
 #>
 $RunAccount = get-Credential
 $ServerList =  get-adcomputer -Filter {OperatingSystem -like "*Server*"} -Properties OperatingSystem,IPv4Address|select Name,IPv4Address,OperatingSystem
 IF(($serverlist.name.count -match ($serverlist.ipv4address|sort -Unique).count)-ne $true)
 {
-    #$Servers = ($serverlist|sort IPV4Address -Unique)|select Name,IPV4Address
     FOREACH($Server in $Serverlist)
     {
     $newserver = Invoke-Command -ComputerName $Server.Name{$env:COMPUTERNAME}
@@ -21,8 +23,8 @@ IF(($serverlist.name.count -match ($serverlist.ipv4address|sort -Unique).count)-
 }
 
 #Now Set your Output File Locations, use your temp folder
-$File1 = "$env:TEMP\patchstate.xml"
-$File2 = "$env:TEMP\patchstate.xlsx"
+$File1 = "$env:TEMP\hotfixreport.xml"
+$File2 = "$env:TEMP\hotfixreport.xlsx"
 #Discard Old Copies
 Remove-Item $file1,$file2
 
@@ -122,68 +124,11 @@ Remove-Item $file1,$file2
  </Styles>'
  )> $file1
 
-FOREACH($server in ($serverlist|where{$_.name -ne "NA" -and $_.name -ne "CRSPOWA1" -and $_.name -ne "CRSPDEV"}).name){
+FOREACH($server in ($serverlist|where{$_.name -ne "NA"}).name){
 $server
 $result = $null
 If ($server -eq $env:computername)
-{function Get-Patchstate {
-    param([string]$computer,
-		#Type True, False, or Both to return install, not-installed, or both
-		[string]$installed="Both")
-
-   If(!($computer)){
-   $Name = $env:COMPUTERNAME
-   $AutoUpdate = [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.AutoUpdate"))
-   $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session"))
-   }
-   ELSE{
-   $AutoUpdate = [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.AutoUpdate",$computer))
-   $updatesession =  [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session",$computer))}
-   $updatesearcher = $updatesession.CreateUpdateSearcher()
-   # 0 = NotInstalled | 1 = Installed
-   If($installed.ToUpper() -eq 'True'){$searchresult = $updatesearcher.Search("IsInstalled=1 ")}
-   If($installed.ToUpper() -eq 'False'){$searchresult = $updatesearcher.Search("IsInstalled=0")}
-   If($installed.ToUpper() -eq 'Both' -or !($installed)){$searchresult = $UpdateSearcher.Search("IsInstalled=0 or IsInstalled=1")}
-
-   $Updates = If ($searchresult.Updates.Count  -gt 0) {
-
-  #Updates are  waiting to be installed
-  $count  = $searchresult.Updates.Count
-  Write-Verbose  "Found $Count update\s!"
-
-  #Header Objects
-  [pscustomobject]@{
-    Updates = @( 
-  #Cache the  count to make the For loop run faster   
-  For ($i=0; $i -lt $Count; $i++) {
-  #Create  object holding update
-
-  $Update  = $searchresult.Updates.Item($i)
-  [pscustomobject]@{
-    Title =  $Update.Title
-    KB =  $($Update.KBArticleIDs)
-    SecurityBulletin = $($Update.SecurityBulletinIDs)
-    MsrcSeverity = $Update.MsrcSeverity
-    IsDownloaded = $Update.IsDownloaded
-    IsInstalled = $Update.IsInstalled
-    Url =  $Update.MoreInfoUrls
-    Categories =  ($Update.Categories  | Select-Object  -ExpandProperty Name)
-    BundledUpdates = @($Update.BundledUpdates)|ForEach{
-    [pscustomobject]@{
-      Title = $_.Title
-      DownloadUrl = @($_.DownloadContents).DownloadUrl
-      }
-    }
-   }
-  }
- )
-    LastSearchSuccessDate = $AutoUpdate.results.LastSearchSuccessDate
-    LastInstallationSuccessDate = $AutoUpdate.results.LastInstallationSuccessDate
- }
- }
- Return $Updates 
-}
-$result = Get-Patchstate}
+{$hotfixes = Get-HotFix -ComputerName $Server}
 ELSE{
 $result = Invoke-Command -ComputerName $server -Credential $RunAccount{
 function Get-Patchstate {
